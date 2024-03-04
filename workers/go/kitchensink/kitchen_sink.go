@@ -87,7 +87,7 @@ func KitchenSinkWorkflow(ctx workflow.Context, params *kitchensink.WorkflowInput
 }
 
 func KitchenSinkChildWorkflow(ctx workflow.Context, params *kitchensink.WorkflowInput) (*common.Payload, error) {
-	workflow.GetLogger(ctx).Debug("Started kitchen sink workflow")
+	workflow.GetLogger(ctx).Debug("Started kitchen sink child workflow")
 
 	state := KSWorkflowState{
 		workflowState: &kitchensink.WorkflowState{},

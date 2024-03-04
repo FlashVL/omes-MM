@@ -26,6 +26,12 @@ func init() {
 
 			PrepareTestInput: func(ctx context.Context, opts loadgen.ScenarioInfo, params *kitchensink.TestInput) error {
 				// Для каждого дочернего рабочего процесса готовим набор действий
+				delayAction := kitchensink.ExecuteActivityAction_Delay{
+					Delay: &durationpb.Duration{
+						Seconds: 0,
+						Nanos:   200000000, // 200 миллисекунд в наносекундах
+					},
+				}
 
 				d := durationpb.New(time.Millisecond)
 				d.Seconds = 1
@@ -36,7 +42,7 @@ func init() {
 						childActions = append(childActions, &kitchensink.Action{
 							Variant: &kitchensink.Action_ExecActivity{
 								ExecActivity: &kitchensink.ExecuteActivityAction{
-									ActivityType:        &kitchensink.ExecuteActivityAction_Noop{},
+									ActivityType:        &delayAction,
 									StartToCloseTimeout: &durationpb.Duration{Seconds: 5},
 								},
 							},
