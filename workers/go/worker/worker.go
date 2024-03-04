@@ -66,6 +66,8 @@ func runWorkers(client client.Client, taskQueues []string, options cmdoptions.Wo
 				MaxConcurrentActivityTaskPollers:       options.MaxConcurrentActivityPollers,
 				MaxConcurrentWorkflowTaskPollers:       options.MaxConcurrentWorkflowPollers,
 			})
+
+			//w.RegisterWorkflowWithOptions(kitchensink.KitchenSinkChildWorkflow, workflow.RegisterOptions{Name: "kitchenSink-child"})
 			w.RegisterWorkflowWithOptions(kitchensink.KitchenSinkWorkflow, workflow.RegisterOptions{Name: "kitchenSink"})
 			w.RegisterActivityWithOptions(kitchensink.Noop, activity.RegisterOptions{Name: "noop"})
 			w.RegisterActivityWithOptions(kitchensink.Delay, activity.RegisterOptions{Name: "delay"})

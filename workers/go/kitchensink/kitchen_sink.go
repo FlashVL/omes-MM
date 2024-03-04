@@ -86,6 +86,76 @@ func KitchenSinkWorkflow(ctx workflow.Context, params *kitchensink.WorkflowInput
 	}
 }
 
+func KitchenSinkChildWorkflow(ctx workflow.Context, params *kitchensink.WorkflowInput) (*common.Payload, error) {
+	workflow.GetLogger(ctx).Debug("Started kitchen sink workflow")
+
+	state := KSWorkflowState{
+		workflowState: &kitchensink.WorkflowState{},
+	}
+	queryErr := workflow.SetQueryHandler(ctx, "report_state",
+		func(input interface{}) (*kitchensink.WorkflowState, error) {
+			return state.workflowState, nil
+		})
+	if queryErr != nil {
+		return nil, queryErr
+	}
+
+	updateErr := workflow.SetUpdateHandlerWithOptions(ctx, "do_actions_update",
+		func(ctx workflow.Context, actions *kitchensink.DoActionsUpdate) (rval interface{}, err error) {
+			rval, err = state.handleActionSet(ctx, actions.GetDoActions())
+			if rval == nil {
+				rval = &state.workflowState
+			}
+			return rval, err
+		}, workflow.UpdateHandlerOptions{
+			Validator: func(ctx workflow.Context, actions *kitchensink.DoActionsUpdate) error {
+				if actions.GetRejectMe() != nil {
+					return errors.New("rejected")
+				}
+				return nil
+			},
+		})
+	if updateErr != nil {
+		return nil, updateErr
+	}
+
+	// Handle initial set
+	if params != nil && params.InitialActions != nil {
+		for _, actionSet := range params.InitialActions {
+			if ret, err := state.handleActionSet(ctx, actionSet); ret != nil || err != nil {
+				workflow.GetLogger(ctx).Debug("Finishing early", "ret", ret, "err", err)
+				return ret, err
+			}
+		}
+	}
+
+	// Handle signal action sets
+	signalActionsChan := workflow.GetSignalChannel(ctx, "do_actions_signal")
+	retOrErrChan := workflow.NewChannel(ctx)
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		for {
+			var sigActions kitchensink.DoSignal_DoSignalActions
+			signalActionsChan.Receive(ctx, &sigActions)
+			actionSet := sigActions.GetDoActionsInMain()
+			if actionSet == nil {
+				actionSet = sigActions.GetDoActions()
+			}
+			workflow.Go(ctx, func(ctx workflow.Context) {
+				ret, err := state.handleActionSet(ctx, actionSet)
+				if ret != nil || err != nil {
+					retOrErrChan.Send(ctx, ReturnOrErr{ret, err})
+				}
+			})
+		}
+	})
+	for {
+		var retOrErr ReturnOrErr
+		retOrErrChan.Receive(ctx, &retOrErr)
+		workflow.GetLogger(ctx).Info("Finishing workflow", "retOrErr", retOrErr)
+		return retOrErr.retme, retOrErr.err
+	}
+}
+
 func (ws *KSWorkflowState) handleActionSet(
 	ctx workflow.Context,
 	set *kitchensink.ActionSet,
