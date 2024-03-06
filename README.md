@@ -1,3 +1,35 @@
+Для запуска сценария тестирования необходимо сбилдить контейнер со сценарием для этого необходимо выполнить команду
+
+```sh
+docker build -f Dockerfile.scenario -t omes-scenario .
+```
+После билда контейнера, мы можем его запустить есть два варианта выполнение:
+1. По времени выполнение
+	--duration - флаг указывает в течении какого времени будет выполняться сценарий
+```sh
+docker run -d --name omes-scenario-1 --network temporal-network --network-alias scenario-1 omes-scenario run-scenario --duration 40m --prom-listen-address scenario-1:8079 --max-concurrent 2 --scenario mainscenarios --run-id test1 --server-address 172.17.0.1:7233
+```
+
+2. По кол-во итераций
+	--iterations - флаг указывает кол-во сценариев которые надо выполнить
+```sh
+docker run -d --name omes-scenario-1 --network temporal-network --network-alias scenario-1 omes-scenario run-scenario --iterations 500 --prom-listen-address scenario-1:8079 --max-concurrent 2 --scenario mainscenarios --run-id test1 --server-address 172.17.0.1:7233
+```
+
+Описание флагов
+--scenario            - имя сценария
+--max-concurrent      - кол-во одновременно запущенных сценариев
+--run-id              - id для генерации имени очереди
+--server-address      - адрес кластера temporal
+--prom-listen-address - адрес куда будем выкладывать метрики
+
+
+Для запуска контейнера worker-а необходимо сбилдить контейнер с worker для этого необходимо выполнить команду
+```sh
+docker build -f Dockerfile.worker -t omes-worker .
+```
+После билда контейнера, мы можем его запустить:
+
 ```sh
 docker run -p 8070:8070 -d --name omes-worker-1 --network temporal-network --network-alias worker-1 omes-worker run-worker --scenario mainscenarios --run-id test1 --language go --server-address 172.17.0.1:7233 --worker-prom-listen-address worker-1:8070
 ```
