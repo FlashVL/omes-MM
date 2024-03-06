@@ -3,14 +3,16 @@ package loadgen
 import (
 	"context"
 	"fmt"
-	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/api/operatorservice/v1"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/operatorservice/v1"
+
+	"github.com/google/uuid"
 	"github.com/temporalio/omes/loadgen/kitchensink"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -167,7 +169,7 @@ func (r *Run) TaskQueue() string {
 func (r *Run) DefaultStartWorkflowOptions() client.StartWorkflowOptions {
 	return client.StartWorkflowOptions{
 		TaskQueue:                                TaskQueueForRun(r.ScenarioName, r.RunID),
-		ID:                                       fmt.Sprintf("w-%s-%d", r.RunID, r.Iteration),
+		ID:                                       fmt.Sprintf("w-%s-%s", r.RunID, uuid.New()),
 		WorkflowExecutionErrorWhenAlreadyStarted: true,
 	}
 }

@@ -3,7 +3,6 @@ package scenarios
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"go.temporal.io/api/common/v1"
 	"go.temporal.io/sdk/converter"
@@ -33,8 +32,6 @@ func init() {
 					},
 				}
 
-				d := durationpb.New(time.Millisecond)
-				d.Seconds = 1
 				for i := 0; i < opts.ScenarioOptionInt("children-per-workflow", 10); i++ {
 					// Создаем ActionSet для дочернего рабочего процесса
 					childActions := make([]*kitchensink.Action, 0, opts.ScenarioOptionInt("activities-per-workflow", 10))
@@ -52,7 +49,7 @@ func init() {
 					childWorkflowInput := &kitchensink.WorkflowInput{
 						InitialActions: []*kitchensink.ActionSet{{
 							Actions:    childActions,
-							Concurrent: true, // Если нужно выполнить активности параллельно
+							Concurrent: false,
 						}},
 					}
 					childWorkflowInput.InitialActions = append(childWorkflowInput.InitialActions,

@@ -102,8 +102,15 @@ func (h *metricsHandler) Timer(name string) client.MetricsTimer {
 			panic(fmt.Errorf("duplicate metric with different type: %s", name))
 		}
 	} else {
-		// TODO: buckets
-		timer = prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: name}, h.labels)
+		expBuckets1 := prometheus.LinearBuckets(1, 1, 60)
+		expBuckets2 := prometheus.LinearBuckets(65, 5, 48)
+		expBuckets3 := prometheus.LinearBuckets(310, 10, 80)
+
+		expBuckets := append(expBuckets1, expBuckets2...)
+
+		expBuckets = append(expBuckets, expBuckets3...)
+
+		timer = prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: name, Buckets: expBuckets}, h.labels)
 		h.metrics.registry.MustRegister(timer)
 		h.metrics.cache[name] = timer
 	}
