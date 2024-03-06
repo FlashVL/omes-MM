@@ -17,6 +17,7 @@ docker run -d --name omes-scenario-1 --network temporal-network --network-alias 
 ```
 
 Описание флагов
+
 --scenario            - имя сценария
 
 --max-concurrent      - кол-во одновременно запущенных сценариев
@@ -36,6 +37,8 @@ docker build -f Dockerfile.worker -t omes-worker .
 ```sh
 docker run -p 8070:8070 -d --name omes-worker-1 --network temporal-network --network-alias worker-1 omes-worker run-worker --scenario mainscenarios --run-id test1 --language go --server-address 172.17.0.1:7233 --worker-prom-listen-address worker-1:8070
 ```
+Описание флагов
+
 --scenario                   - имя сценария
 
 --run-id                     - id для генерации имени очереди
