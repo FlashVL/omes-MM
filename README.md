@@ -18,11 +18,14 @@ docker run -d --name omes-scenario-1 --network temporal-network --network-alias 
 
 Описание флагов
 --scenario            - имя сценария
---max-concurrent      - кол-во одновременно запущенных сценариев
---run-id              - id для генерации имени очереди
---server-address      - адрес кластера temporal
---prom-listen-address - адрес куда будем выкладывать метрики
 
+--max-concurrent      - кол-во одновременно запущенных сценариев
+
+--run-id              - id для генерации имени очереди
+
+--server-address      - адрес кластера temporal
+
+--prom-listen-address - адрес куда будем выкладывать метрики
 
 Для запуска контейнера worker-а необходимо сбилдить контейнер с worker для этого необходимо выполнить команду
 ```sh
@@ -34,11 +37,14 @@ docker build -f Dockerfile.worker -t omes-worker .
 docker run -p 8070:8070 -d --name omes-worker-1 --network temporal-network --network-alias worker-1 omes-worker run-worker --scenario mainscenarios --run-id test1 --language go --server-address 172.17.0.1:7233 --worker-prom-listen-address worker-1:8070
 ```
 --scenario                   - имя сценария
---run-id                     - id для генерации имени очереди
---language                   - язык исполнения сценария
---server-address             - адрес кластера temporal
---worker-prom-listen-address - адрес куда будем выкладывать метрики
 
+--run-id                     - id для генерации имени очереди
+
+--language                   - язык исполнения сценария
+
+--server-address             - адрес кластера temporal
+
+--worker-prom-listen-address - адрес куда будем выкладывать метрики
 
 
 # Omes - a load generator for Temporal
