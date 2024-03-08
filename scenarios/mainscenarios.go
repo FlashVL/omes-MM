@@ -21,21 +21,39 @@ func init() {
 				WorkflowInput: &kitchensink.WorkflowInput{
 					InitialActions: []*kitchensink.ActionSet{},
 				},
+				ClientSequence: &kitchensink.ClientSequence{
+					ActionSets: []*kitchensink.ClientActionSet{},
+				},
 			},
 
 			PrepareTestInput: func(ctx context.Context, opts loadgen.ScenarioInfo, params *kitchensink.TestInput) error {
-				// Для каждого дочернего рабочего процесса готовим набор действий
+				actionSets := []*kitchensink.ClientActionSet{}
+
+				for signalCount := 0; signalCount < 5; signalCount++ {
+					sendSignalAction := &kitchensink.ClientAction{}
+					sendSignalAction.Variant = &kitchensink.ClientAction_DoSignal{
+						DoSignal: &kitchensink.DoSignal{
+							Variant: &kitchensink.DoSignal_DoSignalActions_{},
+						},
+					}
+					actionSets = append(actionSets, &kitchensink.ClientActionSet{
+						Actions: []*kitchensink.ClientAction{sendSignalAction},
+					})
+				}
+
+				params.ClientSequence.ActionSets = actionSets
+
 				delayAction := kitchensink.ExecuteActivityAction_Delay{
 					Delay: &durationpb.Duration{
 						Seconds: 0,
 						Nanos:   200000000, // 200 миллисекунд в наносекундах
 					},
 				}
-
-				for i := 0; i < opts.ScenarioOptionInt("children-per-workflow", 10); i++ {
+				// Для каждого доернего рабочего процесса готовим набор действий
+				for i := 0; i < opts.ScenarioOptionInt("children-per-workflow", 4); i++ {
 					// Создаем ActionSet для дочернего рабочего процесса
-					childActions := make([]*kitchensink.Action, 0, opts.ScenarioOptionInt("activities-per-workflow", 10))
-					for j := 0; j < opts.ScenarioOptionInt("activities-per-workflow", 10); j++ {
+					childActions := make([]*kitchensink.Action, 0, opts.ScenarioOptionInt("activities-per-workflow", 4))
+					for j := 0; j < opts.ScenarioOptionInt("activities-per-workflow", 4); j++ {
 						childActions = append(childActions, &kitchensink.Action{
 							Variant: &kitchensink.Action_ExecActivity{
 								ExecActivity: &kitchensink.ExecuteActivityAction{
@@ -45,6 +63,7 @@ func init() {
 							},
 						})
 					}
+					childWorkflowId := opts.RunID + "-child-wf-" + strconv.Itoa(i)
 
 					childWorkflowInput := &kitchensink.WorkflowInput{
 						InitialActions: []*kitchensink.ActionSet{{
@@ -52,6 +71,7 @@ func init() {
 							Concurrent: false,
 						}},
 					}
+
 					childWorkflowInput.InitialActions = append(childWorkflowInput.InitialActions,
 						&kitchensink.ActionSet{
 							Actions: []*kitchensink.Action{
@@ -65,6 +85,7 @@ func init() {
 							},
 						},
 					)
+
 					childInput, err := converter.GetDefaultDataConverter().ToPayload(childWorkflowInput)
 					if err != nil {
 						return err
@@ -75,7 +96,7 @@ func init() {
 						Actions: []*kitchensink.Action{{
 							Variant: &kitchensink.Action_ExecChildWorkflow{
 								ExecChildWorkflow: &kitchensink.ExecuteChildWorkflowAction{
-									WorkflowId:   opts.RunID + "-child-wf-" + strconv.Itoa(i),
+									WorkflowId:   childWorkflowId,
 									WorkflowType: "kitchenSink-child",
 									Input:        []*common.Payload{childInput},
 								},
